@@ -4,25 +4,31 @@ MCP (Model Context Protocol) server for integrating Atlassian Jira and Confluenc
 
 ## Features
 
-- **10 MCP Tools** for Jira and Confluence operations
+- **15 MCP Tools** for Jira and Confluence operations
 - **Automatic format conversion**: Plain text / ADF (Jira) and Storage Format (Confluence)
 - **Pagination support** for search operations
 - **Auto-version fetching** for Confluence page updates
 - **Comprehensive error handling** with helpful messages
+- **Jira Server/Data Center support** via `JIRA_API_VERSION=2`
 
-### Jira Tools (6)
+### Jira Tools (8)
 1. `jira_search` - Search issues with JQL
-2. `jira_get_issue` - Get detailed issue information
-3. `jira_create_issue` - Create new issues
-4. `jira_add_comment` - Add comments to issues
-5. `jira_get_transitions` - Get available status transitions
-6. `jira_transition` - Change issue status
+2. `jira_get_issue` - Get detailed issue information (with optional field filtering)
+3. `jira_create_issue` - Create new issues (supports extra fields: parent, components, labels, etc.)
+4. `jira_update_issue` - Update fields of an existing issue
+5. `jira_add_comment` - Add comments to issues
+6. `jira_get_issue_comments` - Get comments with pagination (for large issues)
+7. `jira_get_transitions` - Get available status transitions
+8. `jira_transition` - Change issue status
 
-### Confluence Tools (4)
-7. `confluence_search` - Search pages with CQL
-8. `confluence_get_page` - Get page content and metadata
-9. `confluence_create_page` - Create new pages
-10. `confluence_update_page` - Update existing pages
+### Confluence Tools (7)
+9. `confluence_search` - Search pages with CQL
+10. `confluence_get_page` - Get page content and metadata
+11. `confluence_create_page` - Create new pages
+12. `confluence_update_page` - Update existing pages
+13. `confluence_get_labels` - Get all labels for a page
+14. `confluence_add_labels` - Add labels to a page
+15. `confluence_remove_labels` - Remove labels from a page
 
 ## Requirements
 
@@ -65,6 +71,12 @@ Edit `.env` with your credentials:
 JIRA_BASE_URL=https://your-domain.atlassian.net
 JIRA_EMAIL=your-email@example.com
 JIRA_API_TOKEN=your-api-token-here
+
+# Optional: "3" for Jira Cloud (default), "2" for Jira Server/Data Center
+# JIRA_API_VERSION=3
+
+# Optional: "/wiki" for Confluence Cloud (default), "" for Confluence Server/Data Center
+# CONFLUENCE_PATH=/wiki
 ```
 
 #### Getting an API Token
@@ -124,12 +136,17 @@ Add this configuration:
       "env": {
         "JIRA_BASE_URL": "https://your-domain.atlassian.net",
         "JIRA_EMAIL": "your-email@example.com",
-        "JIRA_API_TOKEN": "your-api-token"
+        "JIRA_API_TOKEN": "your-api-token",
+        "JIRA_API_VERSION": "3",
+        "CONFLUENCE_PATH": "/wiki"
       }
     }
   }
 }
 ```
+
+**`JIRA_API_VERSION`**: `"3"` for Jira Cloud (default), `"2"` for Jira Server/Data Center.  
+**`CONFLUENCE_PATH`**: `"/wiki"` for Confluence Cloud (default), `""` for Confluence Server/Data Center.
 
 **Important**: Replace `/absolute/path/to/jira-confluence` with the actual absolute path to this directory.
 
@@ -182,18 +199,27 @@ text ~ "authentication"
 ```
 ├── jira_confluence_mcp/
 │   ├── __init__.py       # Package initialization
-│   ├── server.py         # MCP server with 10 tools
+│   ├── __main__.py       # Module entry point
+│   ├── server.py         # MCP server with 15 tools
 │   ├── client.py         # Jira/Confluence API client
 │   ├── formatters.py     # ADF and Storage Format converters
-│   ├── models.py         # Pydantic data models
+│   ├── models.py         # Data models
 │   └── errors.py         # Error handling
-├── test_connection.py    # Connection test script
+├── tests/
+│   ├── test_connection.py   # API connection tests
+│   ├── test_mcp_tools.py    # MCP tool tests
+│   └── test_mcp_server.py   # Server integration tests
+├── docs/                 # Additional documentation
+│   ├── SPECIFICATION.md  # Detailed API specification
+│   ├── TESTING.md        # Testing guide
+│   └── API_CHANGES.md    # Changelog
 ├── pyproject.toml        # Project configuration
 ├── .env.example          # Environment template
-├── .gitignore           # Git ignore rules
-├── README.md            # This file
-├── SPECIFICATION.md     # Detailed specification
-└── CLAUDE.md            # Claude Code guidance
+├── .gitignore            # Git ignore rules
+├── README.md             # This file
+├── QUICKSTART.md         # Quick start guide
+├── CONTRIBUTING.md       # Contribution guidelines
+└── CLAUDE.md             # Claude Code guidance
 ```
 
 ## Development

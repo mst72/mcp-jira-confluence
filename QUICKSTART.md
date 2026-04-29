@@ -125,21 +125,26 @@ In Claude Desktop, try these commands:
 
 ## What's Available?
 
-### 10 MCP Tools
+### 15 MCP Tools
 
-**Jira (6 tools):**
+**Jira (8 tools):**
 1. Search issues with JQL
-2. Get issue details
-3. Create issues
-4. Add comments
-5. Get status transitions
-6. Change issue status
+2. Get issue details (with field filtering)
+3. Create issues (with extra fields support)
+4. Update issue fields
+5. Add comments
+6. Get comments with pagination
+7. Get status transitions
+8. Change issue status
 
-**Confluence (4 tools):**
-7. Search pages with CQL
-8. Get page content
-9. Create pages
-10. Update pages
+**Confluence (7 tools):**
+9. Search pages with CQL
+10. Get page content
+11. Create pages
+12. Update pages
+13. Get page labels
+14. Add labels to a page
+15. Remove labels from a page
 
 ### Auto-Features
 
