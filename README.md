@@ -5,7 +5,7 @@ MCP (Model Context Protocol) server for integrating Atlassian Jira and Confluenc
 ## Features
 
 - **10 MCP Tools** for Jira and Confluence operations
-- **Automatic format conversion**: Plain text ’ ADF (Jira) and Storage Format (Confluence)
+- **Automatic format conversion**: Plain text / ADF (Jira) and Storage Format (Confluence)
 - **Pagination support** for search operations
 - **Auto-version fetching** for Confluence page updates
 - **Comprehensive error handling** with helpful messages
