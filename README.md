@@ -180,21 +180,20 @@ text ~ "authentication"
 ## Project Structure
 
 ```
-jira-confluence/
- jira_confluence_mcp/
-    __init__.py       # Package initialization
-    server.py         # MCP server with 10 tools
-    client.py         # Jira/Confluence API client
-    formatters.py     # ADF and Storage Format converters
-    models.py         # Pydantic data models
-    errors.py         # Error handling
- test_connection.py    # Connection test script
- pyproject.toml        # Project configuration
- .env.example          # Environment template
- .gitignore           # Git ignore rules
- README.md            # This file
- SPECIFICATION.md     # Detailed specification
- CLAUDE.md            # Claude Code guidance
+├── jira_confluence_mcp/
+│   ├── __init__.py       # Package initialization
+│   ├── server.py         # MCP server with 10 tools
+│   ├── client.py         # Jira/Confluence API client
+│   ├── formatters.py     # ADF and Storage Format converters
+│   ├── models.py         # Pydantic data models
+│   └── errors.py         # Error handling
+├── test_connection.py    # Connection test script
+├── pyproject.toml        # Project configuration
+├── .env.example          # Environment template
+├── .gitignore           # Git ignore rules
+├── README.md            # This file
+├── SPECIFICATION.md     # Detailed specification
+└── CLAUDE.md            # Claude Code guidance
 ```
 
 ## Development
