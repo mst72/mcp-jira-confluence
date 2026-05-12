@@ -25,6 +25,7 @@ def test_connection():
     base_url = os.getenv('JIRA_BASE_URL')
     email = os.getenv('JIRA_EMAIL')
     api_token = os.getenv('JIRA_API_TOKEN')
+    auth_type = os.getenv('JIRA_AUTH_TYPE', 'basic')
 
     # Validate credentials
     if not all([base_url, email, api_token]):
@@ -41,14 +42,21 @@ def test_connection():
         print("See .env.example for template.")
         sys.exit(1)
 
+    api_version = os.getenv('JIRA_API_VERSION', '3')
+    confluence_path = os.getenv('CONFLUENCE_PATH', '/wiki')
+    confluence_base_url = os.getenv('CONFLUENCE_BASE_URL')
+    confluence_pat = os.getenv('CONFLUENCE_PAT')
+
     print(f"Base URL: {base_url}")
     print(f"Email: {email}")
     print(f"API Token: {'*' * 20}")
+    print(f"Auth type: {auth_type}")
+    print(f"API version: v{api_version}")
     print()
 
     # Create client
     try:
-        client = JiraConfluenceClient(base_url, email, api_token)
+        client = JiraConfluenceClient(base_url, email, api_token, api_version, confluence_path, auth_type, confluence_base_url, confluence_pat)
         print("✅ Client created successfully")
         print()
     except Exception as e:
