@@ -27,31 +27,52 @@ class JiraConfluenceClient:
         email: str,
         api_token: str,
         api_version: str = "3",
-        confluence_path: str = "/wiki"
+        confluence_path: str = "/wiki",
+        auth_type: str = "basic",
+        confluence_base_url: Optional[str] = None,
+        confluence_pat: Optional[str] = None
     ):
         """
         Initialize the Jira/Confluence client.
 
         Args:
-            base_url: Base URL of Atlassian instance (e.g., https://your-domain.atlassian.net)
-            email: Account email address
-            api_token: API token from Atlassian account settings
+            base_url: Base URL of Jira instance (e.g., https://your-domain.atlassian.net)
+            email: Account email address (used for Basic Auth)
+            api_token: API token or Personal Access Token for Jira
             api_version: Jira API version - "2" for Server/older Cloud, "3" for Cloud (default)
             confluence_path: Path prefix for Confluence API - "/wiki" for Cloud, "" for Server/DC
+            auth_type: "basic" for email+token Basic Auth (Cloud), "bearer" for PAT (Server/DC)
+            confluence_base_url: Override base URL for Confluence (e.g., when Jira and Confluence
+                are on different paths like /jira vs /confluence on the same host)
+            confluence_pat: Separate Personal Access Token for Confluence Server/DC
         """
         self.base_url = base_url.rstrip('/')
+        self.confluence_base_url = (confluence_base_url or base_url).rstrip('/')
         self.email = email
         self.api_token = api_token
         self.api_version = api_version
         self.jira_api_path = f"/rest/api/{api_version}"
         self.confluence_api_path = f"{confluence_path}/rest/api"
-        self.session = requests.Session()
-        self.session.auth = HTTPBasicAuth(email, api_token)
-        self.session.headers.update({
+
+        common_headers = {
             'Accept': 'application/json',
             'Content-Type': 'application/json',
-            'X-Atlassian-Token': 'no-check',  # Required for some on-premise servers
-        })
+            'X-Atlassian-Token': 'no-check',
+        }
+
+        self.session = requests.Session()
+        if auth_type == "bearer":
+            self.session.headers.update({'Authorization': f'Bearer {api_token}'})
+        else:
+            self.session.auth = HTTPBasicAuth(email, api_token)
+        self.session.headers.update(common_headers)
+
+        if confluence_pat:
+            self.confluence_session = requests.Session()
+            self.confluence_session.headers.update({'Authorization': f'Bearer {confluence_pat}'})
+            self.confluence_session.headers.update(common_headers)
+        else:
+            self.confluence_session = self.session
 
     def _request(
         self,
@@ -59,7 +80,8 @@ class JiraConfluenceClient:
         endpoint: str,
         params: Optional[Dict[str, Any]] = None,
         json: Optional[Dict[str, Any]] = None,
-        timeout: int = 30
+        timeout: int = 30,
+        _base_url: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Make an authenticated request to the API.
@@ -70,6 +92,7 @@ class JiraConfluenceClient:
             params: Query parameters
             json: JSON body data
             timeout: Request timeout in seconds
+            _base_url: Override base URL (used internally for Confluence)
 
         Returns:
             JSON response data
@@ -77,10 +100,12 @@ class JiraConfluenceClient:
         Raises:
             JiraConfluenceError: On API error
         """
-        url = f"{self.base_url}{endpoint}"
+        base = _base_url or self.base_url
+        url = f"{base}{endpoint}"
+        session = self.confluence_session if base == self.confluence_base_url else self.session
 
         try:
-            response = self.session.request(
+            response = session.request(
                 method=method,
                 url=url,
                 params=params,
@@ -582,7 +607,7 @@ class JiraConfluenceClient:
             'expand': 'space,history.lastUpdated,version'
         }
 
-        return self._request('GET', f'{self.confluence_api_path}/content/search', params=params)
+        return self._request('GET', f'{self.confluence_api_path}/content/search', params=params, _base_url=self.confluence_base_url)
 
     def get_confluence_page(self, page_id: str) -> Dict[str, Any]:
         """
@@ -598,7 +623,7 @@ class JiraConfluenceClient:
             page = client.get_confluence_page("123456")
         """
         params = {'expand': 'body.storage,version,space'}
-        return self._request('GET', f'{self.confluence_api_path}/content/{page_id}', params=params)
+        return self._request('GET', f'{self.confluence_api_path}/content/{page_id}', params=params, _base_url=self.confluence_base_url)
 
     def create_confluence_page(
         self,
@@ -647,7 +672,7 @@ class JiraConfluenceClient:
         if parent_id:
             payload["ancestors"] = [{"id": parent_id}]
 
-        return self._request('POST', f'{self.confluence_api_path}/content', json=payload)
+        return self._request('POST', f'{self.confluence_api_path}/content', json=payload, _base_url=self.confluence_base_url)
 
     def update_confluence_page(
         self,
@@ -700,7 +725,7 @@ class JiraConfluenceClient:
             }
         }
 
-        return self._request('PUT', f'{self.confluence_api_path}/content/{page_id}', json=payload)
+        return self._request('PUT', f'{self.confluence_api_path}/content/{page_id}', json=payload, _base_url=self.confluence_base_url)
 
     def get_confluence_labels(self, page_id: str) -> Dict[str, Any]:
         """
@@ -715,7 +740,7 @@ class JiraConfluenceClient:
         Example:
             labels = client.get_confluence_labels("123456")
         """
-        result = self._request('GET', f'{self.confluence_api_path}/content/{page_id}/label')
+        result = self._request('GET', f'{self.confluence_api_path}/content/{page_id}/label', _base_url=self.confluence_base_url)
         return {
             "page_id": page_id,
             "labels": result.get("results", [])
@@ -736,7 +761,7 @@ class JiraConfluenceClient:
             client.add_confluence_labels("123456", ["decision", "architecture"])
         """
         payload = [{"name": label} for label in labels]
-        self._request('POST', f'{self.confluence_api_path}/content/{page_id}/label', json=payload)
+        self._request('POST', f'{self.confluence_api_path}/content/{page_id}/label', json=payload, _base_url=self.confluence_base_url)
 
         return {
             "success": True,
@@ -760,7 +785,7 @@ class JiraConfluenceClient:
         """
         for label in labels:
             try:
-                self._request('DELETE', f'{self.confluence_api_path}/content/{page_id}/label/{label}')
+                self._request('DELETE', f'{self.confluence_api_path}/content/{page_id}/label/{label}', _base_url=self.confluence_base_url)
             except JiraConfluenceError as e:
                 # Ignore 404 - label might not exist
                 if "404" not in str(e):

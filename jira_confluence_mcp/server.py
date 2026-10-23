@@ -41,6 +41,12 @@ def get_client() -> JiraConfluenceClient:
         api_version = os.getenv('JIRA_API_VERSION', '3')  # Default to v3 (Cloud)
         # Confluence path prefix: "/wiki" for Cloud (default), "" for Server/DC
         confluence_path = os.getenv('CONFLUENCE_PATH', '/wiki')
+        # Auth type: "basic" for Cloud (email+token), "bearer" for Server/DC PAT
+        auth_type = os.getenv('JIRA_AUTH_TYPE', 'basic')
+        # Separate Confluence base URL when Jira and Confluence are on different paths
+        confluence_base_url = os.getenv('CONFLUENCE_BASE_URL')
+        # Separate PAT for Confluence Server/DC (if different from Jira PAT)
+        confluence_pat = os.getenv('CONFLUENCE_PAT')
 
         if not all([base_url, email, api_token]):
             missing = []
@@ -61,7 +67,7 @@ def get_client() -> JiraConfluenceClient:
             print(f"Warning: Invalid JIRA_API_VERSION '{api_version}', using '3'", file=sys.stderr)
             api_version = '3'
 
-        _client = JiraConfluenceClient(base_url, email, api_token, api_version, confluence_path)
+        _client = JiraConfluenceClient(base_url, email, api_token, api_version, confluence_path, auth_type, confluence_base_url, confluence_pat)
 
     return _client
 
